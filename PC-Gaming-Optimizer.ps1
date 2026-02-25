@@ -1,19 +1,20 @@
 # =============================================================================
 # PC-Gaming-Optimizer.ps1
-# Full Windows PC Optimization - Debloat, Gaming Tweaks, Privacy & Performance
+# Full Windows PC Optimization - Debloat, Gaming Tweaks, Privacy and Performance
 # Author: Patrick Moreno | github.com/pgitm03
-# Compatible with Windows 10 & Windows 11
+# Compatible with Windows 10 and Windows 11
 # Must be run as Administrator
 # =============================================================================
 
 #Requires -RunAsAdministrator
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
 function Write-Info    { param($msg) Write-Host "[*] $msg" -ForegroundColor Cyan }
 function Write-Success { param($msg) Write-Host "[+] $msg" -ForegroundColor Green }
 function Write-Skip    { param($msg) Write-Host "[~] Skipped." -ForegroundColor Gray }
 function Write-Fail    { param($msg) Write-Host "[-] FAILED: $msg" -ForegroundColor Red }
-function Write-Section { param($msg) 
+
+function Write-Section {
+    param($msg)
     Write-Host ""
     Write-Host "============================================================" -ForegroundColor Magenta
     Write-Host "  $msg" -ForegroundColor Magenta
@@ -40,34 +41,24 @@ function Set-RegistryValue {
     }
 }
 
-# ── Banner ────────────────────────────────────────────────────────────────────
 Clear-Host
 Write-Host ""
-Write-Host "  ██████╗  ██████╗    ██████╗ ██████╗ ████████╗" -ForegroundColor Cyan
-Write-Host "  ██╔══██╗██╔════╝   ██╔═══██╗██╔══██╗╚══██╔══╝" -ForegroundColor Cyan
-Write-Host "  ██████╔╝██║        ██║   ██║██████╔╝   ██║   " -ForegroundColor Cyan
-Write-Host "  ██╔═══╝ ██║        ██║   ██║██╔═══╝    ██║   " -ForegroundColor Cyan
-Write-Host "  ██║     ╚██████╗   ╚██████╔╝██║        ██║   " -ForegroundColor Cyan
-Write-Host "  ╚═╝      ╚═════╝    ╚═════╝ ╚═╝        ╚═╝   " -ForegroundColor Cyan
-Write-Host ""
-Write-Host "       Windows PC Gaming Optimizer v2.0" -ForegroundColor White
-Write-Host "       By Patrick Moreno | github.com/pgitm03" -ForegroundColor Gray
-Write-Host ""
-Write-Host "  This script will ask before making each change." -ForegroundColor Yellow
+Write-Host "  Windows PC Gaming Optimizer" -ForegroundColor Cyan
+Write-Host "  By Patrick Moreno | github.com/pgitm03" -ForegroundColor Gray
+Write-Host "  This script asks before making each change." -ForegroundColor Yellow
 Write-Host "  A system restore point will be created first." -ForegroundColor Yellow
 Write-Host ""
 
 $go = Read-Host "Ready to start? (y/n)"
 if ($go -ne 'y') { Write-Host "Exited." -ForegroundColor Gray; exit }
 
-# ── Create Restore Point ──────────────────────────────────────────────────────
 Write-Info "Creating a system restore point before making any changes..."
 try {
     Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
     Checkpoint-Computer -Description "Before PC-Gaming-Optimizer" -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop
-    Write-Success "Restore point created. You can roll back via: System Properties > System Protection."
+    Write-Success "Restore point created. You can roll back via System Properties > System Protection."
 } catch {
-    Write-Host "[!] Could not create restore point automatically. Consider creating one manually before continuing." -ForegroundColor Yellow
+    Write-Host "[!] Could not create restore point. Consider creating one manually." -ForegroundColor Yellow
 }
 
 # =============================================================================
@@ -107,8 +98,7 @@ $bloatwareApps = @(
     "Microsoft.ZuneVideo",
     "MicrosoftTeams",
     "Microsoft.Clipchamp",
-    "Microsoft.WindowsCommunicationsApps",
-    "Microsoft.MicrosoftEdge.Stable"
+    "Microsoft.WindowsCommunicationsApps"
 )
 
 if (Ask "Remove Microsoft bloatware apps (Bing, Skype, Xbox overlays, Teams, etc.)?") {
@@ -130,7 +120,6 @@ if (Ask "Remove Microsoft bloatware apps (Bing, Skype, Xbox overlays, Teams, etc
     Write-Success "Removed $removed bloatware apps."
 } else { Write-Skip "Bloatware removal" }
 
-# Disable OneDrive
 if (Ask "Disable and remove OneDrive?") {
     Write-Info "Disabling OneDrive..."
     try {
@@ -144,9 +133,7 @@ if (Ask "Disable and remove OneDrive?") {
     } catch { Write-Fail $_ }
 } else { Write-Skip "OneDrive" }
 
-# Disable Cortana
 if (Ask "Disable Cortana?") {
-    Write-Info "Disabling Cortana..."
     Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" "AllowCortana" 0
     Set-RegistryValue "HKCU:\Software\Microsoft\Personalization\Settings" "AcceptedPrivacyPolicy" 0
     Write-Success "Cortana disabled."
@@ -158,20 +145,18 @@ if (Ask "Disable Cortana?") {
 Write-Section "SECTION 2 - PRIVACY AND TELEMETRY"
 
 if (Ask "Disable Windows telemetry and data collection?") {
-    Write-Info "Disabling telemetry..."
     Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
     Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" "AllowTelemetry" 0
-    # Disable telemetry scheduled tasks
     $tasks = @(
         "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser",
         "\Microsoft\Windows\Application Experience\ProgramDataUpdater",
-        "\Microsoft\Windows\Autochk\Proxy",
         "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator",
-        "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip",
-        "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector"
+        "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip"
     )
     foreach ($task in $tasks) {
-        try { Disable-ScheduledTask -TaskPath (Split-Path $task) -TaskName (Split-Path $task -Leaf) -ErrorAction SilentlyContinue | Out-Null } catch {}
+        try {
+            Disable-ScheduledTask -TaskPath (Split-Path $task) -TaskName (Split-Path $task -Leaf) -ErrorAction SilentlyContinue | Out-Null
+        } catch {}
     }
     Write-Success "Telemetry disabled."
 } else { Write-Skip "Telemetry" }
@@ -199,6 +184,11 @@ if (Ask "Disable Wi-Fi Sense (auto-sharing Wi-Fi passwords)?") {
     Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" "AutoConnectAllowedOEM" 0
     Write-Success "Wi-Fi Sense disabled."
 } else { Write-Skip "Wi-Fi Sense" }
+
+if (Ask "Disable Delivery Optimization (stops Windows using your bandwidth to share updates)?") {
+    Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" "DODownloadMode" 0
+    Write-Success "Delivery Optimization disabled."
+} else { Write-Skip "Delivery Optimization" }
 
 # =============================================================================
 # SECTION 3 - GAMING PERFORMANCE TWEAKS
@@ -243,7 +233,6 @@ if (Ask "Disable fullscreen optimizations globally (fixes frame pacing issues)?"
 } else { Write-Skip "Fullscreen optimizations" }
 
 if (Ask "Set GPU and CPU scheduling priority to HIGH for games?") {
-    Write-Info "Boosting game scheduling priority..."
     $gamePath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
     Set-RegistryValue $gamePath "Affinity" 0
     Set-RegistryValue $gamePath "Background Only" "False" -Type String
@@ -252,13 +241,12 @@ if (Ask "Set GPU and CPU scheduling priority to HIGH for games?") {
     Set-RegistryValue $gamePath "Priority" 6
     Set-RegistryValue $gamePath "Scheduling Category" "High" -Type String
     Set-RegistryValue $gamePath "SFIO Priority" "High" -Type String
-    # Also set system responsiveness
     Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "SystemResponsiveness" 0
     Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" "NetworkThrottlingIndex" 0xffffffff
     Write-Success "Game scheduling priority set to HIGH."
 } else { Write-Skip "Game priority" }
 
-if (Ask "Enable Hardware-Accelerated GPU Scheduling / HAGS (Windows 11 - reduces input lag)?") {
+if (Ask "Enable Hardware-Accelerated GPU Scheduling / HAGS (reduces input lag)?") {
     Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" "HwSchMode" 2
     Write-Success "HAGS enabled. Restart required."
 } else { Write-Skip "HAGS" }
@@ -267,14 +255,14 @@ if (Ask "Disable mouse acceleration (raw input for better aim)?") {
     Set-RegistryValue "HKCU:\Control Panel\Mouse" "MouseSpeed" 0
     Set-RegistryValue "HKCU:\Control Panel\Mouse" "MouseThreshold1" 0
     Set-RegistryValue "HKCU:\Control Panel\Mouse" "MouseThreshold2" 0
-    Write-Success "Mouse acceleration disabled. Raw input enabled."
+    Write-Success "Mouse acceleration disabled."
 } else { Write-Skip "Mouse acceleration" }
 
-if (Ask "Disable Nagle's Algorithm (reduces latency in online games that use TCP)?") {
+if (Ask "Disable Nagles Algorithm (reduces latency in online games)?") {
     Write-Info "Detecting your IP address..."
     try {
         $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "169.*" -and $_.IPAddress -ne "127.0.0.1" } | Select-Object -First 1).IPAddress
-        Write-Info "Found IP: $ip - applying Nagle's disable to adapter..."
+        Write-Info "Found IP: $ip - applying fix..."
         $interfaces = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
         foreach ($iface in $interfaces) {
             $ifaceIP = (Get-ItemProperty -Path $iface.PSPath -ErrorAction SilentlyContinue).DhcpIPAddress
@@ -283,9 +271,9 @@ if (Ask "Disable Nagle's Algorithm (reduces latency in online games that use TCP
                 Set-ItemProperty -Path $iface.PSPath -Name "TCPNoDelay" -Value 1 -Type DWord -Force
             }
         }
-        Write-Success "Nagle's Algorithm disabled."
-    } catch { Write-Fail "Could not disable Nagle's: $_" }
-} else { Write-Skip "Nagle's Algorithm" }
+        Write-Success "Nagles Algorithm disabled."
+    } catch { Write-Fail "Could not disable Nagles: $_" }
+} else { Write-Skip "Nagles Algorithm" }
 
 if (Ask "Optimize TCP/IP settings for gaming (lower latency, better throughput)?") {
     $tcpPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
@@ -303,28 +291,22 @@ if (Ask "Disable visual effects for max performance (animations, shadows, etc.)?
     Write-Success "Visual effects set to best performance."
 } else { Write-Skip "Visual effects" }
 
-if (Ask "Disable Delivery Optimization (stops Windows using your bandwidth to share updates with others - reduces ping)?") {
-    Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" "DODownloadMode" 0
-    Write-Success "Delivery Optimization disabled."
-} else { Write-Skip "Delivery Optimization" }
-
 # =============================================================================
-# SECTION 4 - UNNECESSARY SERVICES
+# SECTION 4 - DISABLE UNNECESSARY SERVICES
 # =============================================================================
 Write-Section "SECTION 4 - DISABLE UNNECESSARY SERVICES"
 
 $services = @(
-    @{Name="DiagTrack";        Desc="Connected User Experiences and Telemetry"},
-    @{Name="dmwappushservice"; Desc="WAP Push Message Routing (telemetry)"},
-    @{Name="SysMain";          Desc="SysMain / Superfetch (unnecessary on SSD)"},
-    @{Name="WSearch";          Desc="Windows Search indexing (can cause stutters)"},
-    @{Name="TabletInputService";Desc="Touch Keyboard and Handwriting Panel"},
-    @{Name="Fax";              Desc="Fax Service"},
-    @{Name="RemoteRegistry";   Desc="Remote Registry (security risk)"},
-    @{Name="XboxGipSvc";       Desc="Xbox Accessory Management"},
-    @{Name="XblAuthManager";   Desc="Xbox Live Auth Manager"},
-    @{Name="XblGameSave";      Desc="Xbox Live Game Save"},
-    @{Name="XboxNetApiSvc";    Desc="Xbox Live Networking"}
+    @{Name="DiagTrack";         Desc="Connected User Experiences and Telemetry"},
+    @{Name="dmwappushservice";  Desc="WAP Push Message Routing (telemetry)"},
+    @{Name="SysMain";           Desc="SysMain / Superfetch (unnecessary on SSD)"},
+    @{Name="WSearch";           Desc="Windows Search indexing (can cause stutters)"},
+    @{Name="Fax";               Desc="Fax Service"},
+    @{Name="RemoteRegistry";    Desc="Remote Registry (security risk)"},
+    @{Name="XboxGipSvc";        Desc="Xbox Accessory Management"},
+    @{Name="XblAuthManager";    Desc="Xbox Live Auth Manager"},
+    @{Name="XblGameSave";       Desc="Xbox Live Game Save"},
+    @{Name="XboxNetApiSvc";     Desc="Xbox Live Networking"}
 )
 
 foreach ($svc in $services) {
@@ -359,45 +341,30 @@ if (Ask "Clear temp files and flush DNS?") {
         }
     }
     Write-Success "Cleared $count temp items."
-
     Write-Info "Flushing DNS cache..."
     ipconfig /flushdns | Out-Null
     Write-Success "DNS cache flushed."
 } else { Write-Skip "Cleanup" }
-
-if (Ask "Run Disk Cleanup silently (removes Windows Update cache, old files)?") {
-    Write-Info "Running Disk Cleanup..."
-    try {
-        $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
-        $cleanupKeys = Get-ChildItem $regPath
-        foreach ($key in $cleanupKeys) {
-            Set-ItemProperty -Path $key.PSPath -Name "StateFlags0001" -Value 2 -Type DWord -ErrorAction SilentlyContinue
-        }
-        Start-Process -FilePath cleanmgr.exe -ArgumentList "/sagerun:1" -Wait -NoNewWindow
-        Write-Success "Disk Cleanup complete."
-    } catch { Write-Fail "Could not run Disk Cleanup: $_" }
-} else { Write-Skip "Disk Cleanup" }
 
 # =============================================================================
 # DONE
 # =============================================================================
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  ALL DONE! Here's what to do next:" -ForegroundColor Cyan
+Write-Host "  ALL DONE! Next steps:" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  1. RESTART your PC for all changes to take effect." -ForegroundColor White
-Write-Host "  2. Check Task Manager > Startup tab and disable" -ForegroundColor White
+Write-Host "  2. Check Task Manager, Startup tab, and disable" -ForegroundColor White
 Write-Host "     anything you don't need launching at boot." -ForegroundColor White
-Write-Host "  3. Update your GPU drivers (NVIDIA/AMD) manually" -ForegroundColor White
-Write-Host "     from the manufacturer's website for best results." -ForegroundColor White
+Write-Host "  3. Update your GPU drivers from NVIDIA or AMD website." -ForegroundColor White
 Write-Host "  4. In your game, turn off Motion Blur and V-Sync" -ForegroundColor White
 Write-Host "     for lower input lag." -ForegroundColor White
-Write-Host "  5. In BIOS, enable XMP/DOCP so your RAM runs at" -ForegroundColor White
-Write-Host "     its rated speed (big FPS boost in CPU-heavy games)." -ForegroundColor White
+Write-Host "  5. In BIOS enable XMP/DOCP so your RAM runs at" -ForegroundColor White
+Write-Host "     its rated speed for a big FPS boost." -ForegroundColor White
 Write-Host ""
 Write-Host "  If anything breaks, restore via:" -ForegroundColor Yellow
-Write-Host "  Start > Create a restore point > System Restore" -ForegroundColor Yellow
+Write-Host "  Start, Create a restore point, System Restore" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  github.com/pgitm03 | Made by Patrick Moreno" -ForegroundColor Gray
+Write-Host "  github.com/pgitm03 - Made by Patrick Moreno" -ForegroundColor Gray
 Write-Host ""
