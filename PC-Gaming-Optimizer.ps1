@@ -1,6 +1,6 @@
 # =============================================================================
 # PC-Gaming-Optimizer.ps1
-# Full Windows PC Optimization — Debloat, Gaming Tweaks, Privacy & Performance
+# Full Windows PC Optimization - Debloat, Gaming Tweaks, Privacy & Performance
 # Author: Patrick Moreno | github.com/pgitm03
 # Compatible with Windows 10 & Windows 11
 # Must be run as Administrator
@@ -71,9 +71,9 @@ try {
 }
 
 # =============================================================================
-# SECTION 1 — BLOATWARE REMOVAL
+# SECTION 1 - BLOATWARE REMOVAL
 # =============================================================================
-Write-Section "SECTION 1 — BLOATWARE REMOVAL"
+Write-Section "SECTION 1 - BLOATWARE REMOVAL"
 
 $bloatwareApps = @(
     "Microsoft.3DBuilder",
@@ -153,9 +153,9 @@ if (Ask "Disable Cortana?") {
 } else { Write-Skip "Cortana" }
 
 # =============================================================================
-# SECTION 2 — PRIVACY & TELEMETRY
+# SECTION 2 - PRIVACY AND TELEMETRY
 # =============================================================================
-Write-Section "SECTION 2 — PRIVACY & TELEMETRY"
+Write-Section "SECTION 2 - PRIVACY AND TELEMETRY"
 
 if (Ask "Disable Windows telemetry and data collection?") {
     Write-Info "Disabling telemetry..."
@@ -201,9 +201,9 @@ if (Ask "Disable Wi-Fi Sense (auto-sharing Wi-Fi passwords)?") {
 } else { Write-Skip "Wi-Fi Sense" }
 
 # =============================================================================
-# SECTION 3 — GAMING PERFORMANCE TWEAKS
+# SECTION 3 - GAMING PERFORMANCE TWEAKS
 # =============================================================================
-Write-Section "SECTION 3 — GAMING PERFORMANCE TWEAKS"
+Write-Section "SECTION 3 - GAMING PERFORMANCE TWEAKS"
 
 if (Ask "Set power plan to Ultimate Performance (best for gaming)?") {
     Write-Info "Enabling Ultimate Performance power plan..."
@@ -274,7 +274,7 @@ if (Ask "Disable Nagle's Algorithm (reduces latency in online games that use TCP
     Write-Info "Detecting your IP address..."
     try {
         $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "169.*" -and $_.IPAddress -ne "127.0.0.1" } | Select-Object -First 1).IPAddress
-        Write-Info "Found IP: $ip — applying Nagle's disable to adapter..."
+        Write-Info "Found IP: $ip - applying Nagle's disable to adapter..."
         $interfaces = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
         foreach ($iface in $interfaces) {
             $ifaceIP = (Get-ItemProperty -Path $iface.PSPath -ErrorAction SilentlyContinue).DhcpIPAddress
@@ -309,9 +309,9 @@ if (Ask "Disable Delivery Optimization (stops Windows using your bandwidth to sh
 } else { Write-Skip "Delivery Optimization" }
 
 # =============================================================================
-# SECTION 4 — UNNECESSARY SERVICES
+# SECTION 4 - UNNECESSARY SERVICES
 # =============================================================================
-Write-Section "SECTION 4 — DISABLE UNNECESSARY SERVICES"
+Write-Section "SECTION 4 - DISABLE UNNECESSARY SERVICES"
 
 $services = @(
     @{Name="DiagTrack";        Desc="Connected User Experiences and Telemetry"},
@@ -343,9 +343,9 @@ foreach ($svc in $services) {
 }
 
 # =============================================================================
-# SECTION 5 — CLEANUP
+# SECTION 5 - CLEANUP
 # =============================================================================
-Write-Section "SECTION 5 — CLEANUP"
+Write-Section "SECTION 5 - CLEANUP"
 
 if (Ask "Clear temp files and flush DNS?") {
     Write-Info "Clearing temp files..."
